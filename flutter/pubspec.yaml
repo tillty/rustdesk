@@ -29,12 +29,12 @@ dependencies:
 
   ffi: ^2.1.0
   path_provider: ^2.1.1
-  external_path: ^1.0.3
+  external_path: ^2.0.0
   provider: ^6.0.5
   tuple: ^2.0.0
-  wakelock_plus: ^1.1.3
+  wakelock_plus: ^1.3.2
   #firebase_analytics: ^9.1.5
-  package_info_plus: ^4.2.0
+  package_info_plus: ^8.0.0
   url_launcher: ^6.3.1
   url_launcher_ios: ^6.3.2
   toggle_switch: ^2.1.0
@@ -45,7 +45,7 @@ dependencies:
   settings_ui: ^2.0.2
   flutter_breadcrumb: ^1.0.1
   http: ^1.1.0
-  qr_code_scanner: ^1.0.0
+  qr_code_scanner_plus: ^2.0.0
   zxing2: ^0.2.0
   image_picker: ^1.1.2
   image: ^4.0.17
@@ -70,13 +70,12 @@ dependencies:
   desktop_drop: ^0.4.4
   scroll_pos: ^0.4.0
   debounce_throttle: ^2.0.0
-  file_picker: ^5.1.0
+  file_picker: ^10.1.0
   flutter_svg: ^2.0.5
   uni_links:
     git:
-      url: https://github.com/rustdesk-org/uni_links
+      url: https://github.com/romreed/uni_links
       path: uni_links
-      ref: f416118d843a7e9ed117c7bb7bdc2deda5a9e86f
   uni_links_desktop: ^0.1.6 # use 0.1.6 to make flutter 3.13 works
   path: ^1.8.1
   auto_size_text: ^3.0.0
@@ -84,7 +83,7 @@ dependencies:
   win32: any
   password_strength: ^0.2.0
   flutter_launcher_icons: ^0.13.1
-  flutter_keyboard_visibility: ^5.4.0
+  flutter_keyboard_visibility: ^6.0.0
   texture_rgba_renderer:
     git:
       url: https://github.com/rustdesk-org/flutter_texture_rgba_renderer
@@ -105,13 +104,13 @@ dependencies:
   pull_down_button: ^0.9.3
   device_info_plus: ^9.1.0
   qr_flutter: ^4.1.0
-  extended_text: 14.0.0
+  extended_text: ^15.0.2
 
 dev_dependencies:
   icons_launcher: ^2.0.4
   #flutter_test:
   #sdk: flutter
-  build_runner: ^2.4.6
+  build_runner: ^2.4.15
   freezed: ^2.4.2
   flutter_lints: ^2.0.2
   ffigen: ^8.0.2
