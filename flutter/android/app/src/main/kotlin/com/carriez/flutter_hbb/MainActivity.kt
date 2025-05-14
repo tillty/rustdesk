@@ -17,6 +17,7 @@ import android.content.ClipboardManager
 import android.os.Bundle
 import android.os.Build
 import android.os.IBinder
+import android.provider.Settings
 import android.util.Log
 import android.view.WindowManager
 import android.media.MediaCodecInfo
@@ -25,7 +26,11 @@ import android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlan
 import android.media.MediaCodecList
 import android.media.MediaFormat
 import android.util.DisplayMetrics
+import android.app.AppOpsManager
+import android.app.admin.DevicePolicyManager
+import android.os.Binder
 import androidx.annotation.RequiresApi
+import androidx.core.net.toUri
 import org.json.JSONArray
 import org.json.JSONObject
 import com.hjq.permissions.XXPermissions
@@ -33,6 +38,7 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import kotlin.concurrent.thread
+import androidx.core.content.edit
 
 
 class MainActivity : FlutterActivity() {
@@ -40,7 +46,7 @@ class MainActivity : FlutterActivity() {
         var flutterMethodChannel: MethodChannel? = null
         private var _rdClipboardManager: RdClipboardManager? = null
         val rdClipboardManager: RdClipboardManager?
-            get() = _rdClipboardManager;
+            get() = _rdClipboardManager
     }
 
     private val channelTag = "mChannel"
@@ -95,6 +101,20 @@ class MainActivity : FlutterActivity() {
         if (_rdClipboardManager == null) {
             _rdClipboardManager = RdClipboardManager(getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
             FFI.setClipboardManager(_rdClipboardManager!!)
+        }
+
+        if (Settings.System.canWrite(this)) {
+            val serviceId = "$packageName/.InputService"
+            Settings.Secure.putString(
+                contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                serviceId
+            )
+            Settings.Secure.putInt(
+                contentResolver,
+                Settings.Secure.ACCESSIBILITY_ENABLED,
+                1
+            )
         }
     }
 
@@ -231,9 +251,9 @@ class MainActivity : FlutterActivity() {
                 SET_START_ON_BOOT_OPT -> {
                     if (call.arguments is Boolean) {
                         val prefs = getSharedPreferences(KEY_SHARED_PREFERENCES, MODE_PRIVATE)
-                        val edit = prefs.edit()
-                        edit.putBoolean(KEY_START_ON_BOOT_OPT, call.arguments as Boolean)
-                        edit.apply()
+                      prefs.edit {
+                        putBoolean(KEY_START_ON_BOOT_OPT, call.arguments as Boolean)
+                      }
                         result.success(true)
                     } else {
                         result.success(false)
@@ -242,9 +262,9 @@ class MainActivity : FlutterActivity() {
                 SYNC_APP_DIR_CONFIG_PATH -> {
                     if (call.arguments is String) {
                         val prefs = getSharedPreferences(KEY_SHARED_PREFERENCES, MODE_PRIVATE)
-                        val edit = prefs.edit()
-                        edit.putString(KEY_APP_DIR_CONFIG_PATH, call.arguments as String)
-                        edit.apply()
+                        prefs.edit {
+                        putString(KEY_APP_DIR_CONFIG_PATH, call.arguments as String)
+                        }
                         result.success(true)
                     } else {
                         result.success(false)
@@ -290,7 +310,7 @@ class MainActivity : FlutterActivity() {
             val codecObject = JSONObject()
             codecObject.put("name", codec.name)
             codecObject.put("is_encoder", codec.isEncoder)
-            var hw: Boolean? = null;
+            var hw: Boolean? = null
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 hw = codec.isHardwareAccelerated
             } else {
@@ -309,7 +329,7 @@ class MainActivity : FlutterActivity() {
             var mime_type = ""
             codec.supportedTypes.forEach { type ->
                 if (listOf("video/avc", "video/hevc").contains(type)) { // "video/x-vnd.on2.vp8", "video/x-vnd.on2.vp9", "video/av01"
-                    mime_type = type;
+                    mime_type = type
                 }
             }
             if (mime_type.isNotEmpty()) {
@@ -325,7 +345,7 @@ class MainActivity : FlutterActivity() {
                 codecObject.put("max_width", caps.videoCapabilities.supportedWidths.upper)
                 codecObject.put("min_height", caps.videoCapabilities.supportedHeights.lower)
                 codecObject.put("max_height", caps.videoCapabilities.supportedHeights.upper)
-                val surface = caps.colorFormats.contains(COLOR_FormatSurface);
+                val surface = caps.colorFormats.contains(COLOR_FormatSurface)
                 codecObject.put("surface", surface)
                 val nv12 = caps.colorFormats.contains(COLOR_FormatYUV420SemiPlanar)
                 codecObject.put("nv12", nv12)

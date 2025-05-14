@@ -58,6 +58,7 @@ Future<void> main(List<String> args) async {
         ? <String, dynamic>{}
         : jsonDecode(args[2]) as Map<String, dynamic>;
     int type = argument['type'] ?? -1;
+
     // to-do: No need to parse window id ?
     // Because stateGlobal.windowId is a global value.
     argument['windowId'] = kWindowId;

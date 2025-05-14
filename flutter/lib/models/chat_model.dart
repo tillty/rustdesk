@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hbb/common/shared_state.dart';
 import 'package:flutter_hbb/desktop/widgets/tabbar_widget.dart';
-import 'package:flutter_hbb/mobile/pages/home_page.dart';
 import 'package:flutter_hbb/models/platform_model.dart';
 import 'package:flutter_hbb/models/state_model.dart';
 import 'package:get/get.dart';
@@ -420,12 +419,6 @@ class ChatModel with ChangeNotifier {
           client.unreadChatMessageCount.value += 1;
         } else {
           parent.target?.serverModel.jumpTo(id);
-        }
-      } else {
-        if (HomePage.homeKey.currentState?.isChatPageCurrentTab != true ||
-            _currentKey != messagekey) {
-          client.unreadChatMessageCount.value += 1;
-          mobileUpdateUnreadSum();
         }
       }
       chatUser = ChatUser(id: client.peerId, firstName: client.name);

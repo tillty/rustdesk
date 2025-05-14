@@ -560,45 +560,33 @@ class _PermissionCheckerState extends State<PermissionChecker> {
   @override
   Widget build(BuildContext context) {
     final serverModel = Provider.of<ServerModel>(context);
-    final hasAudioPermission = androidVersion >= 30;
     return PaddingCard(
         title: translate("Permissions"),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          serverModel.mediaOk
-              ? ElevatedButton.icon(
-                      style: ButtonStyle(
-                          backgroundColor:
-                              MaterialStateProperty.all(Colors.red)),
-                      icon: const Icon(Icons.stop),
-                      onPressed: serverModel.toggleService,
-                      label: Text(translate("Stop service")))
-                  .marginOnly(bottom: 8)
-              : SizedBox.shrink(),
-          PermissionRow(
-              translate("Screen Capture"),
-              serverModel.mediaOk,
-              !serverModel.mediaOk &&
-                      gFFI.userModel.userName.value.isEmpty &&
-                      bind.mainGetLocalOption(key: "show-scam-warning") != "N"
-                  ? () => showScamWarning(context, serverModel)
-                  : serverModel.toggleService),
+          // serverModel.mediaOk
+          //     ? ElevatedButton.icon(
+          //             style: ButtonStyle(
+          //                 backgroundColor:
+          //                      WidgetStateProperty.all(serverModel.isStart ? Colors.grey : Colors.red)),
+          //             icon: const Icon(Icons.stop),
+          //             onPressed: serverModel.isStart ? null : serverModel.toggleService,
+          //             label: Text(translate("Stop service")))
+          //         .marginOnly(bottom: 8)
+          //     : SizedBox.shrink(),
+          // PermissionRow(
+          //     translate("Screen Capture"),
+          //     serverModel.mediaOk,
+          //     !serverModel.mediaOk &&
+          //             gFFI.userModel.userName.value.isEmpty &&
+          //             bind.mainGetLocalOption(key: "show-scam-warning") != "N"
+          //         ? () => showScamWarning(context, serverModel)
+          //         : serverModel.isStart ? null : serverModel.toggleService),
           PermissionRow(translate("Input Control"), serverModel.inputOk,
               serverModel.toggleInput),
           PermissionRow(translate("Transfer file"), serverModel.fileOk,
               serverModel.toggleFile),
-          hasAudioPermission
-              ? PermissionRow(translate("Audio Capture"), serverModel.audioOk,
-                  serverModel.toggleAudio)
-              : Row(children: [
-                  Icon(Icons.info_outline).marginOnly(right: 15),
-                  Expanded(
-                      child: Text(
-                    translate("android_version_audio_tip"),
-                    style: const TextStyle(color: MyTheme.darkGray),
-                  ))
-                ]),
-          PermissionRow(translate("Enable clipboard"), serverModel.clipboardOk,
-              serverModel.toggleClipboard),
+          // PermissionRow(translate("Enable clipboard"), serverModel.clipboardOk,
+          //     serverModel.toggleClipboard),
         ]));
   }
 }
@@ -609,7 +597,7 @@ class PermissionRow extends StatelessWidget {
 
   final String name;
   final bool isOk;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -618,9 +606,8 @@ class PermissionRow extends StatelessWidget {
         contentPadding: EdgeInsets.all(0),
         title: Text(name),
         value: isOk,
-        onChanged: (bool value) {
-          onPressed();
-        });
+        onChanged: onPressed != null ? (val) => onPressed!() : null,
+        );
   }
 }
 
@@ -679,7 +666,7 @@ class ConnectionManager extends StatelessWidget {
 
   Widget _buildDisconnectButton(Client client) {
     final disconnectButton = ElevatedButton.icon(
-      style: ButtonStyle(backgroundColor: MaterialStatePropertyAll(Colors.red)),
+      style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.red)),
       icon: const Icon(Icons.close),
       onPressed: () {
         bind.cmCloseConnection(connId: client.id);
@@ -693,7 +680,7 @@ class ConnectionManager extends StatelessWidget {
         0,
         ElevatedButton.icon(
           style: ButtonStyle(
-              backgroundColor: MaterialStatePropertyAll(Colors.red)),
+              backgroundColor: WidgetStatePropertyAll(Colors.red)),
           icon: const Icon(Icons.phone),
           label: Text(translate("Stop")),
           onPressed: () {
