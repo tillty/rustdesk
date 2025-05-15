@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:android_intent_plus/flag.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_home_page.dart';
@@ -7,6 +10,7 @@ import 'package:flutter_hbb/mobile/widgets/dialog.dart';
 import 'package:flutter_hbb/models/chat_model.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
+import 'package:uni_links/uni_links.dart';
 
 import '../../common.dart';
 import '../../common/widgets/dialog.dart';
@@ -551,6 +555,8 @@ class PermissionChecker extends StatefulWidget {
 }
 
 class _PermissionCheckerState extends State<PermissionChecker> {
+  StreamSubscription<Uri?>? _uriLinkStream;
+
   @override
   void initState() {
     super.initState();
@@ -562,17 +568,45 @@ class _PermissionCheckerState extends State<PermissionChecker> {
 
   Future<void> _init() async {
     await gFFI.serverModel.startService();
+    if (await _loadInitialUri()) return;
+    if (!isWeb) {
+      _uriLinkStream = uriLinkStream.listen((uri) {
+        if (uri != null) {
+          if (kDebugMode) print('Received URI: $uri');
+          final appId = uri.queryParameters['redirect_app_id'];
+          if (appId != null) {
+            _redirectBack(appId);
+          }
+        }
+      });
+    }
+  }
 
-    // final uri = 'tillty://?rustdesk_id=${gFFI.serverModel.serverId.value.text}&rustdesk_password=${gFFI.serverModel.serverPasswd.value.text}';
+  Future<bool> _loadInitialUri() async {
+    final initialUri = await getInitialUri();
+    if (initialUri != null) {
+      if (kDebugMode) print('Initial URI: $initialUri');
+      final appId = initialUri.queryParameters['redirect_app_id'];
+      if (appId != null) {
+        _redirectBack(appId);
+        return true;
+      }
+    }
 
-    // final intent = AndroidIntent(
-    //   action: 'android.intent.action.VIEW',
-    //   data: uri,
-    //   package: 'com.carriez.flutter_hbb', // the real RustDesk package name
-    //   flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK], // force new task
-    // );
+    return false;
+  }
 
-    // await intent.launch();
+  Future<void> _redirectBack(String appId) async {
+    final uri = '$appId://?rustdesk_id=${gFFI.serverModel.serverId.value.text.replaceAll(' ', '')}&rustdesk_password=${gFFI.serverModel.serverPasswd.value.text}';
+    if (kDebugMode) print('Redirecting back to app: $uri');
+
+    final intent = AndroidIntent(
+      action: 'android.intent.action.VIEW',
+      data: uri,
+      flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
+    );
+
+    await intent.launch();
   }
 
   @override
@@ -606,6 +640,12 @@ class _PermissionCheckerState extends State<PermissionChecker> {
           // PermissionRow(translate("Enable clipboard"), serverModel.clipboardOk,
           //     serverModel.toggleClipboard),
         ]));
+  }
+
+  @override
+  void dispose() {
+    _uriLinkStream?.cancel();
+    super.dispose();
   }
 }
 
