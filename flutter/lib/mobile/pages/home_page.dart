@@ -7,8 +7,6 @@ import '../../models/state_model.dart';
 import 'connection_page.dart';
 
 abstract class PageShape extends Widget {
-  final String title = "";
-  final Widget icon = Icon(null);
   final List<Widget> appBarActions = [];
 }
 
@@ -75,10 +73,9 @@ class HomePageState extends State<HomePage> {
 }
 
 class WebHomePage extends StatelessWidget {
-  final connectionPage = ConnectionPage(appBarActions: <Widget>[const WebSettingsPage()]);
-
   @override
   Widget build(BuildContext context) {
+    final connectionPage = const WebConnectionPage(appBarActions: <Widget>[WebSettingsPage()]);
     stateGlobal.isInMainPage = true;
     handleUnilink(context);
     return Scaffold(

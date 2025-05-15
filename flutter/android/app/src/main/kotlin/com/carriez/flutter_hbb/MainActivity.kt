@@ -24,13 +24,6 @@ import android.media.MediaCodecInfo
 import android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface
 import android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar
 import android.media.MediaCodecList
-import android.media.MediaFormat
-import android.util.DisplayMetrics
-import android.app.AppOpsManager
-import android.app.admin.DevicePolicyManager
-import android.os.Binder
-import androidx.annotation.RequiresApi
-import androidx.core.net.toUri
 import org.json.JSONArray
 import org.json.JSONObject
 import com.hjq.permissions.XXPermissions
@@ -55,6 +48,8 @@ class MainActivity : FlutterActivity() {
 
     private var isAudioStart = false
     private val audioRecordHandle = AudioRecordHandle(this, { false }, { isAudioStart })
+    private var mediaChannelResult: MethodChannel.Result? = null
+    private var floatingWindowIntent: Intent? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -91,8 +86,13 @@ class MainActivity : FlutterActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQ_INVOKE_PERMISSION_ACTIVITY_MEDIA_PROJECTION && resultCode == RES_FAILED) {
-            flutterMethodChannel?.invokeMethod("on_media_projection_canceled", null)
+        if (requestCode == REQ_INVOKE_PERMISSION_ACTIVITY_MEDIA_PROJECTION) {
+            if (resultCode == RES_FAILED) {
+                flutterMethodChannel?.invokeMethod("on_media_projection_canceled", null)
+                mediaChannelResult!!.success(false)
+            } else {
+                mediaChannelResult!!.success(true)
+            }
         }
     }
 
@@ -144,6 +144,7 @@ class MainActivity : FlutterActivity() {
             // make sure result will be invoked, otherwise flutter will await forever
             when (call.method) {
                 "init_service" -> {
+                    mediaChannelResult = result
                     Intent(activity, MainService::class.java).also {
                         bindService(it, serviceConnection, Context.BIND_AUTO_CREATE)
                     }
@@ -152,7 +153,6 @@ class MainActivity : FlutterActivity() {
                         return@setMethodCallHandler
                     }
                     requestMediaProjection()
-                    result.success(true)
                 }
                 "start_capture" -> {
                     mainService?.let {
@@ -417,12 +417,13 @@ class MainActivity : FlutterActivity() {
         super.onStop()
         val disableFloatingWindow = FFI.getLocalOption("disable-floating-window") == "Y"
         if (!disableFloatingWindow && MainService.isReady) {
-            startService(Intent(this, FloatingWindowService::class.java))
+            floatingWindowIntent = Intent(this, FloatingWindowService::class.java)
+            startService(floatingWindowIntent)
         }
     }
 
     override fun onStart() {
         super.onStart()
-        stopService(Intent(this, FloatingWindowService::class.java))
+        if (floatingWindowIntent != null) stopService(floatingWindowIntent)
     }
 }

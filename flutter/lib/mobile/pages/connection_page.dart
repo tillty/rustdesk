@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:auto_size_text_field/auto_size_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hbb/common/formatter/id_formatter.dart';
@@ -19,24 +17,18 @@ import '../../models/platform_model.dart';
 import 'home_page.dart';
 
 /// Connection page for connecting to a remote peer.
-class ConnectionPage extends StatefulWidget implements PageShape {
-  ConnectionPage({Key? key, required this.appBarActions}) : super(key: key);
-
-  @override
-  final icon = const Icon(Icons.connected_tv);
-
-  @override
-  final title = translate("Connection");
+class WebConnectionPage extends StatefulWidget implements PageShape {
+  const WebConnectionPage({Key? key, required this.appBarActions}) : super(key: key);
 
   @override
   final List<Widget> appBarActions;
 
   @override
-  State<ConnectionPage> createState() => _ConnectionPageState();
+  State<WebConnectionPage> createState() => _WebConnectionPageState();
 }
 
 /// State for the connection page.
-class _ConnectionPageState extends State<ConnectionPage> {
+class _WebConnectionPageState extends State<WebConnectionPage> {
   /// Controller for the id input bar.
   final _idController = IDTextEditingController();
   final RxBool _idEmpty = true.obs;
@@ -46,13 +38,10 @@ class _ConnectionPageState extends State<ConnectionPage> {
 
   final AllPeersLoader _allPeersLoader = AllPeersLoader();
 
-  StreamSubscription? _uniLinksSubscription;
-
   // https://github.com/flutter/flutter/issues/157244
   Iterable<Peer> _autocompleteOpts = [];
 
-  _ConnectionPageState() {
-    if (!isWeb) _uniLinksSubscription = listenUniLinks();
+  _WebConnectionPageState() {
     _idController.addListener(() {
       _idEmpty.value = _idController.text.isEmpty;
     });
@@ -359,7 +348,6 @@ class _ConnectionPageState extends State<ConnectionPage> {
 
   @override
   void dispose() {
-    _uniLinksSubscription?.cancel();
     _idController.dispose();
     _idFocusNode.removeListener(onFocusChanged);
     _allPeersLoader.clear();

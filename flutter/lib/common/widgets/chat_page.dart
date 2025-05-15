@@ -21,12 +21,6 @@ class ChatPage extends StatelessWidget implements PageShape {
   }
 
   @override
-  final title = translate("Chat");
-
-  @override
-  final icon = unreadTopRightBuilder(gFFI.chatModel.mobileUnreadSum);
-
-  @override
   final appBarActions = [
     PopupMenuButton<MessageKey>(
         tooltip: "",

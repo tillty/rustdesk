@@ -23,12 +23,6 @@ import 'scan_page.dart';
 
 class SettingsPage extends StatefulWidget implements PageShape {
   @override
-  final title = translate("Settings");
-
-  @override
-  final icon = Icon(Icons.settings);
-
-  @override
   final appBarActions = bind.isDisableSettings() ? [] : [ScanButton()];
 
   @override

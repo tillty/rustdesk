@@ -408,9 +408,12 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> with WidgetsBindingObserver {
+  StreamSubscription<Uri?>? _uniLinksSub;
+
   @override
   void initState() {
     super.initState();
+    _uniLinksSub = listenUniLinks();
     WidgetsBinding.instance.window.onPlatformBrightnessChanged = () {
       final userPreference = MyTheme.getThemeModePreference();
       if (userPreference != ThemeMode.system) return;
@@ -437,6 +440,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _uniLinksSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

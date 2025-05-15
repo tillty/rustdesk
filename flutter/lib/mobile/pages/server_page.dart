@@ -17,12 +17,6 @@ import 'home_page.dart';
 
 class ServerPage extends StatefulWidget implements PageShape {
   @override
-  final title = translate("Share Screen");
-
-  @override
-  final icon = const Icon(Icons.mobile_screen_share);
-
-  @override
   final appBarActions = (!bind.isDisableSettings() &&
           bind.mainGetBuildinOption(key: kOptionHideSecuritySetting) != 'Y')
       ? [_DropDownAction()]
@@ -557,6 +551,30 @@ class PermissionChecker extends StatefulWidget {
 }
 
 class _PermissionCheckerState extends State<PermissionChecker> {
+  @override
+  void initState() {
+    super.initState();
+
+    if (!gFFI.serverModel.isStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _init());
+    }
+  }
+
+  Future<void> _init() async {
+    await gFFI.serverModel.startService();
+
+    // final uri = 'tillty://?rustdesk_id=${gFFI.serverModel.serverId.value.text}&rustdesk_password=${gFFI.serverModel.serverPasswd.value.text}';
+
+    // final intent = AndroidIntent(
+    //   action: 'android.intent.action.VIEW',
+    //   data: uri,
+    //   package: 'com.carriez.flutter_hbb', // the real RustDesk package name
+    //   flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK], // force new task
+    // );
+
+    // await intent.launch();
+  }
+
   @override
   Widget build(BuildContext context) {
     final serverModel = Provider.of<ServerModel>(context);

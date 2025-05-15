@@ -41,7 +41,6 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   @override
   bool get wantKeepAlive => true;
   var systemError = '';
-  StreamSubscription? _uniLinksSubscription;
   var svcStopped = false.obs;
   var watchIsCanScreenRecording = false;
   var watchIsProcessTrust = false;
@@ -828,7 +827,6 @@ class _DesktopHomePageState extends State<DesktopHomePage>
         }
       }
     });
-    _uniLinksSubscription = listenUniLinks();
 
     if (bind.isIncomingOnly()) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -854,7 +852,6 @@ class _DesktopHomePageState extends State<DesktopHomePage>
 
   @override
   void dispose() {
-    _uniLinksSubscription?.cancel();
     Get.delete<RxBool>(tag: 'stop-service');
     _updateTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);

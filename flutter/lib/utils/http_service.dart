@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/platform_model.dart';
 export 'package:http/http.dart' show Response;
@@ -55,8 +54,6 @@ class HttpService {
       case HttpMethod.delete:
         response = await http.delete(url, headers: headers, body: body);
         break;
-      default:
-        throw Exception('Unsupported HTTP method');
     }
 
     return response;

@@ -2056,11 +2056,10 @@ Future<bool> restoreWindowPosition(WindowType type,
 
 var webInitialLink = "";
 
-/// Initialize uni links for macos/windows
+/// Initializes universal links
 ///
 /// [Availability]
-/// initUniLinks should only be used on macos/windows.
-/// we use dbus for linux currently.
+/// Not to be used for linux, as that uses dbus.
 Future<bool> initUniLinks() async {
   if (isLinux) {
     return false;
@@ -2089,7 +2088,7 @@ Future<bool> initUniLinks() async {
 /// * handleByFlutter: Should uni links be handled by Flutter.
 ///
 /// Returns a [StreamSubscription] which can listen the uni links.
-StreamSubscription? listenUniLinks({handleByFlutter = true}) {
+StreamSubscription<Uri?>? listenUniLinks({handleByFlutter = true}) {
   if (isLinux || isWeb) {
     return null;
   }
