@@ -810,7 +810,7 @@ class RustdeskImpl {
   }
 
   String mainGetAppNameSync({dynamic hint}) {
-    return 'tillty Support';
+    return 'Support';
   }
 
   String mainUriPrefixSync({dynamic hint}) {
