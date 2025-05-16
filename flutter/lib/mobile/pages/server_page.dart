@@ -568,7 +568,7 @@ class _PermissionCheckerState extends State<PermissionChecker> {
 
   Future<void> _init() async {
     await gFFI.serverModel.startService();
-    if (await _loadInitialUri()) return;
+    await _loadInitialUri();
     if (!isWeb) {
       _uriLinkStream?.cancel();
       _uriLinkStream = uriLinkStream.listen((uri) async {
