@@ -26,6 +26,7 @@ const kUseBothPasswords = "use-both-passwords";
 
 class ServerModel with ChangeNotifier {
   bool _isStart = false; // Android MainService status
+  bool _isStarting = false;
   bool _mediaOk = false;
   bool _inputOk = false;
   bool _audioOk = false;
@@ -167,7 +168,7 @@ class ServerModel with ChangeNotifier {
         }
       }
 
-      updatePasswordModel();
+      await updatePasswordModel();
     }
 
     if (!isTest) {
@@ -219,7 +220,7 @@ class ServerModel with ChangeNotifier {
     notifyListeners();
   }
 
-  updatePasswordModel() async {
+  Future<void> updatePasswordModel() async {
     var update = false;
     final temporaryPassword = await bind.mainGetTemporaryPassword();
     final verificationMethod =
@@ -383,21 +384,27 @@ class ServerModel with ChangeNotifier {
         await AndroidPermissionManager.request(kManageExternalStorage);
       }
 
-      startService();
+      await startService();
     }
   }
 
   /// Start the screen sharing service.
   Future<void> startService() async {
-    _isStart = true;
-    notifyListeners();
-    parent.target?.ffiModel.updateEventListener(parent.target!.sessionId, "");
-    await parent.target?.invokeMethod("init_service");
-    // ugly is here, because for desktop, below is useless
-    await bind.mainStartService();
-    updateClientState();
-    if (isAndroid) {
-      androidUpdatekeepScreenOn();
+    if (_isStarting) return;
+
+    try {
+      _isStarting = true;
+      parent.target?.ffiModel.updateEventListener(parent.target!.sessionId, "");
+      _isStart = await parent.target!.invokeMethod("init_service");
+      // ugly is here, because for desktop, below is useless
+      await bind.mainStartService();
+      await updateClientState();
+      if (isAndroid) {
+        androidUpdatekeepScreenOn();
+      }
+    } finally {
+      _isStarting = false;
+      notifyListeners();
     }
   }
 
@@ -457,7 +464,7 @@ class ServerModel with ChangeNotifier {
   }
 
   // force
-  updateClientState([String? json]) async {
+  Future<void> updateClientState([String? json]) async {
     if (isTest) return;
     var res = await bind.cmGetClientsState();
     List<dynamic> clientsJson;

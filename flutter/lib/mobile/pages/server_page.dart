@@ -570,43 +570,45 @@ class _PermissionCheckerState extends State<PermissionChecker> {
     await gFFI.serverModel.startService();
     if (await _loadInitialUri()) return;
     if (!isWeb) {
-      _uriLinkStream = uriLinkStream.listen((uri) {
-        if (uri != null) {
-          if (kDebugMode) print('Received URI: $uri');
-          final appId = uri.queryParameters['redirect_app_id'];
-          if (appId != null) {
-            _redirectBack(appId);
-          }
+      _uriLinkStream?.cancel();
+      _uriLinkStream = uriLinkStream.listen((uri) async {
+        if (!gFFI.serverModel.isStart) {
+          await gFFI.serverModel.startService();
         }
+
+        await _maybeRedirectBack(uri);
       });
     }
   }
 
   Future<bool> _loadInitialUri() async {
-    final initialUri = await getInitialUri();
-    if (initialUri != null) {
-      if (kDebugMode) print('Initial URI: $initialUri');
-      final appId = initialUri.queryParameters['redirect_app_id'];
+    final uri = await getInitialUri();
+
+    return _maybeRedirectBack(uri);
+  }
+
+  Future<bool> _maybeRedirectBack(Uri? uri) async {
+    if (uri != null) {
+      if (kDebugMode) print('Redirect URI: $uri');
+      final appId = uri.queryParameters['redirect_app_id'];
       if (appId != null) {
-        _redirectBack(appId);
+        // Their code is dependent on timers...
+        await Future.delayed(const Duration(seconds: 1));
+        final uri = '$appId://?rustdesk_id=${gFFI.serverModel.serverId.value.text.replaceAll(' ', '')}&rustdesk_password=${gFFI.serverModel.serverPasswd.value.text}';
+        if (kDebugMode) print('Redirecting back to app: $uri');
+
+        final intent = AndroidIntent(
+          action: 'android.intent.action.VIEW',
+          data: uri,
+          flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
+        );
+
+        await intent.launch();
         return true;
       }
     }
 
     return false;
-  }
-
-  Future<void> _redirectBack(String appId) async {
-    final uri = '$appId://?rustdesk_id=${gFFI.serverModel.serverId.value.text.replaceAll(' ', '')}&rustdesk_password=${gFFI.serverModel.serverPasswd.value.text}';
-    if (kDebugMode) print('Redirecting back to app: $uri');
-
-    final intent = AndroidIntent(
-      action: 'android.intent.action.VIEW',
-      data: uri,
-      flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
-    );
-
-    await intent.launch();
   }
 
   @override
