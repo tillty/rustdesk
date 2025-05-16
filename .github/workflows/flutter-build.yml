@@ -39,7 +39,7 @@ env:
   # 2. Update the `VCPKG_COMMIT_ID` in `ci.yml` and `playground.yml`.
   VCPKG_COMMIT_ID: "6f29f12e82a8293156836ad81cc9bf5af41fe836"
   # replace static version with tag-derived value
-  VERSION: "${{ replace(inputs.upload-tag, 'v', ') }}"
+  VERSION: "${{ replace(inputs.upload-tag, 'v', '') }}"
   NDK_VERSION: "r27c"
   #signing keys env variable checks
   ANDROID_SIGNING_KEY: "${{ secrets.ANDROID_SIGNING_KEY }}"
@@ -200,7 +200,7 @@ jobs:
   #               Write-Output "printer_driver_adapter.dll, checksums do not match, ignore the file."
   #           }
   #         } catch {
-  #             Write-Host "Ingore the printer driver error."
+  #             Write-host "Ingore the printer driver error."
   #         }
 
   #     - name: find Runner.res
