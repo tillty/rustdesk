@@ -39,7 +39,7 @@ env:
   # 2. Update the `VCPKG_COMMIT_ID` in `ci.yml` and `playground.yml`.
   VCPKG_COMMIT_ID: "6f29f12e82a8293156836ad81cc9bf5af41fe836"
   # replace static version with tag-derived value
-  VERSION: "1.0.0"
+  VERSION: "1.0.2"
   NDK_VERSION: "r27c"
   #signing keys env variable checks
   ANDROID_SIGNING_KEY: "${{ secrets.ANDROID_SIGNING_KEY }}"
@@ -425,79 +425,55 @@ jobs:
   #         files: |
   #           ./SignOutput/rustdesk-*.exe
 
-  # build-for-macOS-arm64-selfhost:
-  #   # use build-for-macOS instead
-  #   if: false
-  #   runs-on: [self-hosted, macOS, ARM64]
-  #   needs: [generate-bridge]
-  #   steps:
-  #     - name: Export GitHub Actions cache environment variables
-  #       uses: actions/github-script@v6
-  #       with:
-  #         script: |
-  #           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-  #           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+  build-for-macOS-arm64-selfhost:
+    runs-on: [self-hosted, macOS, ARM64]
+    needs: [generate-bridge]
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-  #     - name: Checkout source code
-  #       uses: actions/checkout@v4
-  #       with:
-  #         submodules: recursive
+      - name: Restore bridge files
+        uses: actions/download-artifact@master
+        with:
+          name: bridge-artifact
+          path: ./
 
-  #     - name: Restore bridge files
-  #       uses: actions/download-artifact@master
-  #       with:
-  #         name: bridge-artifact
-  #         path: ./
+      - name: Build rustdesk
+        run: |
+          ./build.py --flutter --hwcodec --unix-file-copy-paste
 
-  #     - name: Build rustdesk
-  #       run: |
-  #         ./build.py --flutter --hwcodec --unix-file-copy-paste
+      - name: create unsigned dmg
+        if: env.UPLOAD_ARTIFACT == 'true'
+        run: |
+          CREATE_DMG="$(command -v create-dmg)"
+          CREATE_DMG="$(readlink -f \"$CREATE_DMG\")"
+          sed -i -e 's/MAXIMUM_UNMOUNTING_ATTEMPTS=3/MAXIMUM_UNMOUNTING_ATTEMPTS=7/' "$CREATE_DMG"
+          create-dmg --icon "RustDesk.app" 200 190 --hide-extension "RustDesk.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}-arm64.dmg ./flutter/build/macos/Build/Products/Release/RustDesk.app
 
-  #     - name: create unsigned dmg
-  #       if: env.UPLOAD_ARTIFACT == 'true'
-  #       run: |
-  #         CREATE_DMG="$(command -v create-dmg)"
-  #         CREATE_DMG="$(readlink -f "$CREATE_DMG")"
-  #         sed -i -e 's/MAXIMUM_UNMOUNTING_ATTEMPTS=3/MAXIMUM_UNMOUNTING_ATTEMPTS=7/' "$CREATE_DMG"
-  #         create-dmg --icon "RustDesk.app" 200 190 --hide-extension "RustDesk.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}-arm64.dmg ./flutter/build/macos/Build/Products/Release/RustDesk.app
+      - name: Upload unsigned macOS app
+        if: env.UPLOAD_ARTIFACT == 'true'
+        uses: actions/upload-artifact@master
+        with:
+          name: rustdesk-unsigned-macos-arm64
+          path: rustdesk-${{ env.VERSION }}-arm64.dmg
+      # Skipping code signing; DMG remains unsigned
+      - name: Rename rustdesk
+        if: env.UPLOAD_ARTIFACT == 'true'
+        run: |
+          for name in rustdesk*??.dmg; do
+              mv "$name" "${name%%.dmg}-aarch64.dmg"
+          done
 
-  #     - name: Upload unsigned macOS app
-  #       if: env.UPLOAD_ARTIFACT == 'true'
-  #       uses: actions/upload-artifact@master
-  #       with:
-  #         name: rustdesk-unsigned-macos-arm64
-  #         path: rustdesk-${{ env.VERSION }}-arm64.dmg # can not upload the directory directly or tar.gz file, which destroy the link structure, causing the codesign failed
-
-  #     - name: Codesign app and create signed dmg
-  #       if: env.MACOS_P12_BASE64 != null && env.UPLOAD_ARTIFACT == 'true'
-  #       run: |
-  #         # Patch create-dmg to give more attempts to unmount image
-  #         CREATE_DMG="$(command -v create-dmg)"
-  #         CREATE_DMG="$(readlink -f "$CREATE_DMG")"
-  #         sed -i -e 's/MAXIMUM_UNMOUNTING_ATTEMPTS=3/MAXIMUM_UNMOUNTING_ATTEMPTS=7/' "$CREATE_DMG"
-  #         # start sign the rustdesk.app and dmg
-  #         rm -rf *.dmg || true
-  #         codesign --force --options runtime -s ${{ secrets.MACOS_CODESIGN_IDENTITY }} --deep --strict ./flutter/build/macos/Build/Products/Release/RustDesk.app -vvv
-  #         create-dmg --icon "RustDesk.app" 200 190 --hide-extension "RustDesk.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}.dmg ./flutter/build/macos/Build/Products/Release/RustDesk.app
-  #         codesign --force --options runtime -s ${{ secrets.MACOS_CODESIGN_IDENTITY }} --deep --strict rustdesk-${{ env.VERSION }}.dmg -vvv
-  #         # notarize the rustdesk-${{ env.VERSION }}.dmg
-  #         rcodesign notary-submit --api-key-path ~/.p12/api-key.json  --staple rustdesk-${{ env.VERSION }}.dmg
-
-  #     - name: Rename rustdesk
-  #       if: env.UPLOAD_ARTIFACT == 'true'
-  #       run: |
-  #         for name in rustdesk*??.dmg; do
-  #             mv "$name" "${name%%.dmg}-aarch64.dmg"
-  #         done
-
-  #     - name: Publish DMG package
-  #       if: env.UPLOAD_ARTIFACT == 'true'
-  #       uses: softprops/action-gh-release@v1
-  #       with:
-  #         prerelease: true
-  #         tag_name: ${{ env.TAG_NAME }}
-  #         files: |
-  #           rustdesk*-aarch64.dmg
+      - name: Publish DMG package
+        if: env.UPLOAD_ARTIFACT == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: true
+          tag_name: ${{ env.TAG_NAME }}
+          files: |
+            rustdesk*-aarch64.dmg
 
   # build-rustdesk-ios:
   #   if: ${{ inputs.upload-artifact }}
@@ -847,7 +823,7 @@ jobs:
   #       uses: actions/upload-artifact@master
   #       with:
   #         name: rustdesk-unsigned-macos-${{ matrix.job.arch }}
-  #         path: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg # can not upload the directory directly or tar.gz, which destroy the link structure, causing the codesign failed
+  #         path: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg
 
   #     - name: Codesign app and create signed dmg
   #       if: env.MACOS_P12_BASE64 != null && env.UPLOAD_ARTIFACT == 'true'
@@ -1872,7 +1848,6 @@ jobs:
   #           ./install.sh
   #           popd
   #           rm -rf rust-${{env.RUST_TOOLCHAIN_VERSION}}-${{ matrix.job.target }}
-  #           popd
   #           # install newer nasm for aom
   #           wget --output-document nasm.deb "http://ftp.us.debian.org/debian/pool/main/n/nasm/nasm_${{ env.SCITER_NASM_DEBVERSION }}_${{ matrix.job.deb_arch }}.deb"
   #           dpkg -i nasm.deb

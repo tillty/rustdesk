@@ -103,18 +103,21 @@ class MainActivity : FlutterActivity() {
             FFI.setClipboardManager(_rdClipboardManager!!)
         }
 
-        if (Settings.System.canWrite(this)) {
-            val serviceId = "$packageName/.InputService"
-            Settings.Secure.putString(
-                contentResolver,
-                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
-                serviceId
-            )
-            Settings.Secure.putInt(
-                contentResolver,
-                Settings.Secure.ACCESSIBILITY_ENABLED,
-                1
-            )
+        try {
+            if (Settings.System.canWrite(this)) {
+                val serviceId = "$packageName/.InputService"
+                    Settings.Secure.putString(
+                        contentResolver,
+                        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                        serviceId
+                    )
+                    Settings.Secure.putInt(
+                        contentResolver,
+                        Settings.Secure.ACCESSIBILITY_ENABLED,
+                        1
+                    )
+            }
+        } catch (_: Exception) {
         }
     }
 
